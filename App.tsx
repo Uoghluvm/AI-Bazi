@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { BaziInputForm } from './components/BaziInputForm';
 import { BaziResult } from './components/BaziResult';
 import { LoadingSpinner } from './components/LoadingSpinner';
-import { calculateBazi } from './services/geminiService';
+import { getBaziAnalysisFromAI } from './services/geminiService';
+import { getBaziPillars } from './services/baziCalculator';
 import type { BaziData } from './types';
 
 const App: React.FC = () => {
@@ -11,13 +12,17 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCalculate = async (birthDate: string, birthHour: number) => {
+  const handleCalculate = async (birthDate: string, birthHour: number, gender: 'male' | 'female') => {
     setIsLoading(true);
     setError(null);
     setBaziData(null);
 
     try {
-      const result = await calculateBazi(birthDate, birthHour);
+      // Step 1: Calculate Bazi pillars on the client-side first.
+      const calculatedPillars = getBaziPillars(birthDate, birthHour);
+      
+      // Step 2: Send birth info and calculated pillars to AI for analysis.
+      const result = await getBaziAnalysisFromAI(birthDate, birthHour, gender, calculatedPillars);
       setBaziData(result);
     } catch (err) {
       console.error(err);

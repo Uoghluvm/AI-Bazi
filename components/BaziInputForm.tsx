@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 
 interface BaziInputFormProps {
-  onCalculate: (birthDate: string, birthHour: number) => void;
+  onCalculate: (birthDate: string, birthHour: number, gender: 'male' | 'female') => void;
 }
 
 export const BaziInputForm: React.FC<BaziInputFormProps> = ({ onCalculate }) => {
   const [birthDate, setBirthDate] = useState<string>('');
   const [birthHour, setBirthHour] = useState<number>(12); // Default to noon
+  const [gender, setGender] = useState<'male' | 'female'>('male');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -17,7 +18,7 @@ export const BaziInputForm: React.FC<BaziInputFormProps> = ({ onCalculate }) => 
       return;
     }
     setError(null);
-    onCalculate(birthDate, birthHour);
+    onCalculate(birthDate, birthHour, gender);
   };
 
   const currentYear = new Date().getFullYear();
@@ -48,8 +49,34 @@ export const BaziInputForm: React.FC<BaziInputFormProps> = ({ onCalculate }) => 
             max={maxDate}
             className="w-full bg-gray-900/50 border border-amber-400/30 text-white rounded-lg p-3 focus:ring-amber-400 focus:border-amber-400 transition-colors duration-300"
             required
+            aria-label="出生日期"
           />
         </div>
+
+        <div>
+           <label className="block text-sm font-medium text-amber-100 mb-2">
+            性别
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setGender('male')}
+              className={`w-full p-3 rounded-lg border transition-all duration-300 ${gender === 'male' ? 'bg-amber-600/50 border-amber-400 text-white' : 'bg-gray-900/50 border-amber-400/30 text-amber-100 hover:bg-gray-800/70'}`}
+              aria-pressed={gender === 'male'}
+            >
+              男
+            </button>
+            <button
+              type="button"
+              onClick={() => setGender('female')}
+              className={`w-full p-3 rounded-lg border transition-all duration-300 ${gender === 'female' ? 'bg-amber-600/50 border-amber-400 text-white' : 'bg-gray-900/50 border-amber-400/30 text-amber-100 hover:bg-gray-800/70'}`}
+              aria-pressed={gender === 'female'}
+            >
+              女
+            </button>
+          </div>
+        </div>
+
         <div>
           <label htmlFor="birthHour" className="block text-sm font-medium text-amber-100 mb-2">
             出生时辰
@@ -59,6 +86,7 @@ export const BaziInputForm: React.FC<BaziInputFormProps> = ({ onCalculate }) => 
             value={birthHour}
             onChange={(e) => setBirthHour(parseInt(e.target.value))}
             className="w-full bg-gray-900/50 border border-amber-400/30 text-white rounded-lg p-3 focus:ring-amber-400 focus:border-amber-400 transition-colors duration-300"
+            aria-label="出生时辰"
           >
             {hours.map(hour => (
               <option key={hour.value} value={hour.value} className="bg-gray-800 text-white">

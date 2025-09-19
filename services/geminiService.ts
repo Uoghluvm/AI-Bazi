@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import type { BaziData } from '../types';
+import type { BaziData, BaziPillars } from '../types';
 
 if (!process.env.API_KEY) {
   throw new Error("API_KEY environment variable is not set");
@@ -72,17 +72,27 @@ const baziSchema = {
 };
 
 
-export const calculateBazi = async (birthDate: string, birthHour: number): Promise<BaziData> => {
+export const getBaziAnalysisFromAI = async (birthDate: string, birthHour: number, gender: 'male' | 'female', calculatedPillars: BaziPillars): Promise<BaziData> => {
   try {
     const [year, month, day] = birthDate.split('-');
+    const genderText = gender === 'male' ? '男性' : '女性';
     
-    const prompt = `请为出生于公历 ${year}年${month}月${day}日 ${birthHour}时 的人生成八字命盘和一份详细的分析报告。`;
+    const prompt = `
+请为一名出生于公历 ${year}年${month}月${day}日 ${birthHour}时 的${genderText}，生成一份详细的八字命盘分析报告。
+我们通过前端算法初步推算其八字为：
+- 年柱: ${calculatedPillars.year.stem}${calculatedPillars.year.branch}
+- 月柱: ${calculatedPillars.month.stem}${calculatedPillars.month.branch}
+- 日柱: ${calculatedPillars.day.stem}${calculatedPillars.day.branch}
+- 时柱: ${calculatedPillars.hour.stem}${calculatedPillars.hour.branch}
+
+请以此八字为基础进行深入分析。如果上述八字因特殊节气或计算误差而与公历时间不符，请以您精确的算法为准，使用正确的八字进行分析并返回正确的八字数据。
+    `;
     
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
-        systemInstruction: "你是一位精通中国传统命理学和八字算命的大师。你的任务是根据用户提供的公历出生年月日和时辰，生成一份专业、详细且易于理解的八字命盘分析报告。请确保所有术语都使用简体中文。请严格按照指定的JSON格式输出，不要包含任何markdown标记。",
+        systemInstruction: "你是一位精通中国传统命理学和八字算命的大师。你的任务是根据用户提供的公历出生信息和预先计算的八字，生成一份专业、详细且易于理解的八字命盘分析报告。如果预计算的八字有误，请务必修正。请确保所有术语都使用简体中文，并严格按照指定的JSON格式输出，不要包含任何markdown标记。",
         responseMimeType: "application/json",
         responseSchema: baziSchema,
       },
@@ -91,7 +101,6 @@ export const calculateBazi = async (birthDate: string, birthHour: number): Promi
     const jsonText = response.text.trim();
     const parsedData = JSON.parse(jsonText);
 
-    // Basic validation to ensure the parsed data matches the expected structure
     if (!parsedData.pillars || !parsedData.analysis) {
         throw new Error("AI返回的数据格式不正确。");
     }
